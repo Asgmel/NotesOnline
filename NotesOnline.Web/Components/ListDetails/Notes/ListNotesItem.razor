@@ -131,6 +131,8 @@ else
         if (NoteService is null || Note is null) return;
 
         await NoteService.UpdateNote(Note.Id, NoteUpdateDto);
+        Note.Content = NoteUpdateDto.Content;
+        Note.IsCompleted = NoteUpdateDto.IsCompleted;
     }
 
     protected override void OnParametersSet()
