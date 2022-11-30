@@ -1,0 +1,54 @@
+﻿@page "/List/{Id:int}"
+@using NotesOnline.Dtos;
+@using NotesOnline.Web.Components.ListDetails.Header
+@using NotesOnline.Web.Components.ListDetails.Notes
+@using NotesOnline.Web.Services.Contracts;
+@attribute [Authorize]
+
+<PageTitle>@(SList is not null ? $"Notes Online - {SList.Name}" : "Notes Online")</PageTitle>
+<MudContainer Class="mt-10" MaxWidth="MaxWidth.Small">
+    @if (SList is not null)
+    {
+        if (SList.Name is not null)
+        {
+            <ListHeader Id="Id" SList="SList" OnUpdateCallback="(sList) => { SList = sList; }" />
+            <ListNotes ListId="Id" />
+            //<ListDetailsControls Id="Id"/>
+        }
+        else
+        {
+            <MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true" Color="Color.Primary">Could not access the list with the ID @Id.</MudText>
+        }
+    }
+
+</MudContainer>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [Inject]
+    private ISListService? SListService { get; set; }
+
+    private SListReadDto? SList { get; set; }
+
+    private async Task<SListReadDto> GetList()
+    {
+        if (SListService is not null)
+        {
+            var result = await SListService.GetSList(Id);
+
+            if (result is not null)
+            {
+                return result;
+            }
+        }
+
+        return new SListReadDto();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        SList = await GetList();
+    }
+}

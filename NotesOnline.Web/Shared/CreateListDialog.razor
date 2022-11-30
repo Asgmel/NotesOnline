@@ -1,0 +1,72 @@
+﻿@using NotesOnline.Dtos;
+@using NotesOnline.Web.Services.Contracts;
+<MudDialog>
+    <TitleContent>
+        <MudPaper Elevation="0" Class="d-flex justify-center">
+            <MudText Class="mt-2" Typo="Typo.h4" Color="Color.Primary">Create List</MudText>
+        </MudPaper>
+    </TitleContent>
+    <DialogContent>
+        <MudStack>
+            <MudForm @ref="MudForm">
+                <MudTextField 
+                    T="string"
+                    Class="px-1"
+                    Style="padding-left: 2px"
+                    Disabled="@(!FormActive)" 
+                    Label="List Name" 
+                    @bind-Value="SListCreateDto.Name"
+                    Required="true"
+                    RequiredError="Name is required" />
+            </MudForm>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudPaper Class="d-flex justify-space-between pa-2 pt-5" Elevation="0" Height="100%" Width="100%">
+            <MudButton Class="pa-3" OnClick="() => Cancel_Click()">Cancel</MudButton>
+            <MudButton Class="pa-3" Color="Color.Primary" OnClick="() => Create_Click()">Create</MudButton>
+        </MudPaper>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter] 
+    private MudDialogInstance? MudDialog { get; set; }
+
+    private MudForm? MudForm { get; set; }
+
+    private bool FormActive = true;
+
+    private SListCreateDto SListCreateDto { get; set; } = new SListCreateDto();
+
+    [Inject]
+    private ISListService? SListService { get; set; }
+
+    [Inject]
+    private ISnackbar? Snackbar { get; set; }
+
+    private void Create_Click()
+    {
+        if (MudDialog is not null && MudForm is not null)
+        {
+            MudForm.Validate();
+
+            if (MudForm.IsValid)
+            {
+                if (SListService is not null)
+                {
+                    SListService.CreateSList(SListCreateDto);
+                }
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+
+        }
+    }
+
+    private void Cancel_Click()
+    {
+        if (MudDialog is not null)
+        {
+            MudDialog.Close();
+        }
+    }
+}

@@ -1,0 +1,42 @@
+﻿<MudDialog>
+    <TitleContent>
+        <MudPaper Elevation="0" Class="d-flex justify-center">
+            <MudText Class="mt-2" Typo="Typo.h4" Color="Color.Error">@HeaderText</MudText>
+        </MudPaper>
+    </TitleContent>
+    <DialogContent>
+        <MudText>@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudPaper Class="d-flex justify-space-between pa-2 pt-5" Elevation="0" Height="100%" Width="100%">
+            <MudButton Class="pa-3" OnClick="() => Cancel_Click()">Cancel</MudButton>
+            <MudButton Class="pa-3" Color="Color.Error" OnClick="() => Confirm_Click()">@ButtonText</MudButton>
+        </MudPaper>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+
+    [Parameter] public string? ContentText { get; set; }
+
+    [Parameter] public string? ButtonText { get; set; }
+
+    [Parameter] public string? HeaderText { get; set; }
+
+    [Parameter] public Color Color { get; set; }
+
+    private void Confirm_Click()
+    {
+        if (MudDialog is not null)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+    private void Cancel_Click()
+    {
+        if (MudDialog is not null)
+        {
+            MudDialog.Close(DialogResult.Cancel());
+        }
+    }
+}

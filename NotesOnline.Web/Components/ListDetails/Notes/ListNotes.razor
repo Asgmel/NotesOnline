@@ -1,0 +1,152 @@
+﻿@using NotesOnline.Dtos;
+@using NotesOnline.Web.Services.Contracts;
+
+@if (Notes is not null)
+{
+    <MudStack>
+        @if (Notes.Count() == 0)
+        {
+            <MudText>This list is empty. Click the button below to add a note.</MudText>
+        }
+        else
+        {
+            @foreach (NoteReadDto Note in Notes)
+            {
+                <ListNotesItem Note="Note" OnDeleteCallback="(note) => DeleteNote(note)"/>
+            }
+        }
+        <MudElement HtmlTag="div">
+            <MudDivider Class="my-1" />
+            <MudElement HtmlTag="div" Style="width: 100%; " Class="@($"mb-6 {(DisplayNoteInput ? "" : "d-none")}")">
+                <MudStack Row>
+                    <MudTextField
+                        Style="margin-top: 0; padding-left: 6px"
+                        @ref="AddNoteInputRef"
+                        FullWidth
+                        T="string" 
+                        @bind-Value="NoteCreateDto.Content"
+                        Immediate
+                        OnBlur="() => NoteInput_OnBlur()"
+                        OnKeyDown="(e) => NoteInput_OnEnter(e)"/>
+
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            Class="my-1 py-1"
+                            Disabled="(string.IsNullOrEmpty(NoteCreateDto.Content))"
+                            OnClick="() => NoteInput_OnClick()">
+                            Add
+                        </MudButton>
+                </MudStack>
+            </MudElement>
+
+            <MudButton
+                Variant="Variant.Text" 
+                StartIcon="@Icons.Material.Filled.Add" 
+                IconColor="Color.Primary" 
+                Style="text-transform: none;"
+                FullWidth
+                Class="@($"justify-start py-2 mb-6 mud-primary-text {(DisplayNoteInput ? "d-none" : "")}")"
+                OnClick="() => AddNote_Click()">
+                Add Note
+            </MudButton>   
+        </MudElement>
+    </MudStack>
+}
+else
+{
+    <MudSkeleton />
+}
+
+@code {
+    [Parameter]
+    public int ListId { get; set; }
+
+    [Inject]
+    private INoteService? NoteService { get; set; }
+
+    private MudTextField<string>? AddNoteInputRef { get; set; }
+
+    private bool DisplayNoteInput { get; set; } = false;
+
+    private bool FocusNoteInput { get; set; } = false;
+
+    private List<NoteReadDto>? Notes { get; set; }
+
+    private NoteCreateDto NoteCreateDto { get; set; } = new NoteCreateDto();
+
+    private void AddNote_Click()
+    {
+        FocusNoteInput = true;
+        DisplayNoteInput = true;
+    }
+
+    private async Task NoteInput_OnClick()
+    {
+        await CreateNote();
+        NoteCreateDto.Content = "";
+    }
+
+    private async Task NoteInput_OnEnter(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            await NoteInput_OnClick();
+        }
+    }
+
+    private void NoteInput_OnBlur()
+    {
+        if (string.IsNullOrEmpty(NoteCreateDto.Content))
+        {
+            DisplayNoteInput = false;
+        }
+    }
+
+    private async Task GetNotes()
+    {
+        if (NoteService is not null)
+        {
+            var notesEnumerable = await NoteService.GetNotes(ListId);
+            Notes = notesEnumerable.ToList();
+        }
+    }
+
+    private async Task CreateNote()
+    {
+        if (Notes is null || NoteService is null) return;
+
+        // Set the notes listID before creation
+        NoteCreateDto.SListId = ListId;
+
+        var createdNote = await NoteService.CreateNote(NoteCreateDto);
+
+        if (createdNote is not null)
+        {
+            Notes.Add(createdNote);
+        }
+
+        NoteCreateDto.Content = "";
+    }
+
+    private void DeleteNote(NoteReadDto note)
+    {
+        if (Notes is null) return;
+
+        Notes.Remove(note);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await GetNotes();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (FocusNoteInput && AddNoteInputRef is not null)
+        {
+            await AddNoteInputRef.FocusAsync();
+            FocusNoteInput = false;
+        }
+    }
+}

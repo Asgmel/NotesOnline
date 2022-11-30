@@ -1,0 +1,106 @@
+﻿@page "/Register"
+@using NotesOnline.Dtos;
+@using NotesOnline.Web.Services.Contracts;
+@attribute [AllowAnonymous]
+
+<MudContainer Class="mt-16" MaxWidth="MaxWidth.Small">
+    <MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true" Color="Color.Primary">Register</MudText>
+    <MudForm @ref="MudForm">
+        <MudGrid Class="mt-6">
+            <MudItem xs="12">
+                <MudTextField
+                    T="string" 
+                    Disabled="@(!FormActive)" 
+                    Label="Username" 
+                    @bind-Value="UserCreateDto.UserName" 
+                    Required="true" 
+                    RequiredError="Username is required"/>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField 
+                    T="string" 
+                    Label="Password" 
+                    InputType="InputType.Password" 
+                    Disabled="@(!FormActive)" 
+                    @bind-Value="UserCreateDto.Password" 
+                    Required="true" 
+                    RequiredError="Password is required"/>
+            </MudItem>              
+            <MudItem xs="12">
+                <MudTextField 
+                    T="string" 
+                    Label="Confirm Password" 
+                    InputType="InputType.Password" 
+                    Disabled="@(!FormActive)" 
+                    @bind-Value="ConfirmPassword"
+                    Validation="@((string password) => (PasswordsMatch(password)))" />
+            </MudItem>  
+            <MudItem xs="12" Class="d-flex justify-center">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth Class="mt-8" OnClick="() => Register_Click()">
+                    @if (FormActive)
+                    {
+                        <MudText>Register</MudText>
+                    }
+                    else
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Registering...</MudText>
+                    }
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudForm>
+</MudContainer>
+
+@code {
+    [Inject]
+    private IUserService? UserService { get; set; }
+
+    [Inject]
+    private ISnackbar? Snackbar { get; set; }
+
+    [Inject]
+    private NavigationManager? NavigationManager { get; set; }
+
+    private MudForm? MudForm { get; set; }
+
+    private UserCreateDto UserCreateDto { get; set; } = new UserCreateDto()
+    {
+        UserName = "",
+        Password = ""
+    };
+
+    private string ConfirmPassword { get; set; } = "";
+
+    private bool FormActive = true;
+
+    private async Task Register_Click()
+    {
+        await MudForm!.Validate();
+
+        if (MudForm!.IsValid)
+        {
+            FormActive = false;
+            var success = await UserService!.Register(UserCreateDto);
+
+            if (success)
+            {
+                NavigationManager!.NavigateTo("/login");
+            }
+            else
+            {
+                FormActive = true;
+            }
+        }
+    }
+
+    private string? PasswordsMatch(string confirmPassword)
+    {
+        if (UserCreateDto.Password != confirmPassword)
+        {
+            return "Passwords must match";
+        }
+        return null;
+    }
+
+}

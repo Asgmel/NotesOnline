@@ -1,0 +1,70 @@
+﻿@using NotesOnline.Web.Services.Contracts;
+@inherits LayoutComponentBase
+@inject IDialogService DialogService
+
+<MudThemeProvider IsDarkMode="true"/>
+<MudDialogProvider MaxWidth="MaxWidth.Small" FullWidth="true" />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar>
+        <MudText Typo="Typo.h4" Class="ml-3" Color="Color.Primary">NOTE<i>S</i></MudText>
+        <MudSpacer />
+        <AuthorizeView>
+            <Authorized>
+                <MudButton 
+                    Variant="Variant.Outlined" 
+                    StartIcon="@Icons.Material.Filled.Notes"
+                    OnClick="() => SelectList_Click()">
+                        Select List
+                </MudButton>
+                <MudButton 
+                    Variant="Variant.Outlined" 
+                    Class="ml-4 mr-6" 
+                    StartIcon="@Icons.Material.Filled.EditNote" 
+                    OnClick="() => CreateList_Click()">
+                        Create List
+                </MudButton>
+                <MudButton 
+                    Variant="Variant.Filled" 
+                    Color="Color.Primary" 
+                    OnClick="() => Logout_Click()">
+                        Log Out
+                </MudButton>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Href="/register" Variant="Variant.Filled" Class="mr-6" Color="Color.Primary">Register</MudButton>
+                <MudButton Href="/login" Variant="Variant.Filled" Color="Color.Primary">Log In</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
+    </MudAppBar>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    [Inject]
+    private IUserService? UserService { get; set; }
+
+    [Inject]
+    private ISnackbar? Snackbar { get; set; }
+
+    private async Task Logout_Click()
+    {
+        await UserService!.Logout();
+        Snackbar!.Add("Logged out successfully.");
+    }
+
+    private void SelectList_Click()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        DialogService.Show<SelectListDialog>("View Lists", options);
+    }
+
+    private void CreateList_Click()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        DialogService.Show<CreateListDialog>("Create List", options);
+    }
+}

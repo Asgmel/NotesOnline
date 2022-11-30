@@ -1,0 +1,14 @@
+@import "_content/MudBlazor/MudBlazor.min.css";
+
+.HeaderInput > div > div > input {
+    font-size: 48px !important;
+    color: var(--mud-palette-primary) !important;
+}
+
+.HeaderInput > div > p > div {
+    justify-content: center;
+}
+
+.HeaderInput > div > p > div > div {
+    margin-inline-end: initial !important;
+}

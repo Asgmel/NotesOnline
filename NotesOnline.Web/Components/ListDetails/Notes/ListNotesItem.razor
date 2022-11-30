@@ -1,0 +1,152 @@
+﻿@using NotesOnline.Dtos;
+@using NotesOnline.Web.Services.Contracts;
+@using System.Timers;
+
+@if (Note is not null)
+{
+    <MudPaper 
+        onmouseover="@((MouseEventArgs e) => UserHovering = true)" 
+        onmouseout="@((MouseEventArgs e) => UserHovering = false)"
+        Class="pl-2 pr-3"
+        Elevation="0">
+
+        <MudStack Row Class="justify-space-between" Spacing="0">
+            <MudCheckBox 
+                CheckedChanged="@((bool c) => CheckedChanged(c))"
+                Checked="@NoteUpdateDto.IsCompleted"
+                Disabled="@Disabled"
+                Label="@(EditMode ? "" : NoteUpdateDto.Content)"
+                Style="@(NoteUpdateDto.IsCompleted ? "text-decoration: line-through; color: var(--mud-palette-text-disabled)" : "")"/>
+            <MudTextField 
+                @ref="NoteItemRef"
+                T="string"
+                Style="margin-top: 0; padding-top: 2px"
+                Class="@($"{(EditMode ? "" : "d-none")}")" 
+                @bind-Value="NoteUpdateDto.Content" 
+                OnBlur="() => NoteInput_OnBlur()"
+                OnKeyDown="(e) => NoteInput_OnEnter(e)"/>
+            <MudElement HtmlTag="div" Class="@($"{(UserHovering ? "" : "invisible")}")">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => EditMode = true" Color="Color.Primary"></MudIconButton>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteNote_Click()"></MudIconButton>
+            </MudElement>
+        </MudStack>
+    </MudPaper>
+}
+else
+{
+    <MudSkeleton />
+}
+
+
+@code {
+    [Parameter]
+    public NoteReadDto? Note { get; set; }
+
+    [Parameter]
+    public EventCallback<NoteReadDto> OnDeleteCallback { get; set; }
+
+    [Inject]
+    public INoteService? NoteService { get; set; }
+
+    private NoteUpdateDto NoteUpdateDto { get; set; } = new NoteUpdateDto();
+
+    private MudTextField<string>? NoteItemRef { get; set; }
+
+    private Timer? Timer { get; set; }
+
+    private bool UserHovering { get; set; } = false;
+
+    private bool EditMode { get; set; } = false;
+
+    private bool Disabled { get; set; } = false;
+
+    private async Task NoteInput_OnEnter(KeyboardEventArgs e)
+    {
+        if (NoteItemRef is null) return;
+
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            await NoteItemRef.BlurAsync();
+            await NoteInput_OnBlur();
+        }
+    }
+
+    private async Task NoteInput_OnBlur()
+    {
+        if (Note is null) return;
+
+        if (!string.IsNullOrEmpty(NoteUpdateDto.Content))
+        {
+            EditMode = false;
+            await UpdateNote();
+        }
+        else
+        {
+            NoteUpdateDto.Content = Note.Content;
+        }
+    }
+
+    private async Task DeleteNote_Click()
+    {
+        if (Note is null || NoteService is null) return;
+
+        await OnDeleteCallback.InvokeAsync(Note);
+
+        await NoteService.DeleteNote(Note.Id);
+    }
+
+    private void CheckedChanged(bool c)
+    {
+        NoteUpdateDto.IsCompleted = c;
+
+        // Debounce timer for update request to database
+        if (Timer is not null)
+        {
+            Timer.Dispose();
+        }
+
+        Timer = new Timer(300);
+        Timer.Elapsed += HandleTimer;
+        Timer.Enabled = true;
+        Timer.Start();
+    }
+
+    private async void HandleTimer(Object? source, System.Timers.ElapsedEventArgs e)
+    {
+        if (Note is null) return;
+
+        if (Timer is not null)
+        {
+            Timer.Dispose();
+        }
+
+        if (Note.IsCompleted != NoteUpdateDto.IsCompleted)
+        {
+            await UpdateNote();
+        }
+    }
+
+    private async Task UpdateNote()
+    {
+        if (NoteService is null || Note is null) return;
+
+        await NoteService.UpdateNote(Note.Id, NoteUpdateDto);
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Note is not null)
+        {
+            NoteUpdateDto.Content = Note.Content;
+            NoteUpdateDto.IsCompleted = Note.IsCompleted;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (NoteItemRef is not null)
+        {
+            await NoteItemRef.FocusAsync();
+        }
+    }
+}

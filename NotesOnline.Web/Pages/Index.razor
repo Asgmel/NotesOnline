@@ -1,0 +1,13 @@
+﻿@page "/"
+
+<AuthorizeView>
+    <Authorized>
+        <MudContainer Class="mt-10" MaxWidth="MaxWidth.Small">
+            <MudText Class="mb-10" Typo="Typo.h2" Style="text-align: center" Color="Color.Primary">Notes Online</MudText>
+            <MudText Typo="Typo.body1">Welcome to the notes online web-app! Please create or select a list to begin.</MudText>
+        </MudContainer>
+    </Authorized>
+    <NotAuthorized>
+        <Login />
+    </NotAuthorized>
+</AuthorizeView>

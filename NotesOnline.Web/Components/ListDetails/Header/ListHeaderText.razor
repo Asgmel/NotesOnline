@@ -1,0 +1,92 @@
+﻿@using NotesOnline.Dtos;
+@using NotesOnline.Web.Services.Contracts;
+
+<MudTextField @ref="HeaderInput"
+              T="string"
+              Class="HeaderInput"
+              DisableUnderLine
+              HelperText="Enter a new list name"
+              HelperTextOnFocus="true"
+              Variant="Variant.Text"
+              @bind-Value="SListName"
+              OnBlur="() => Header_OnBlur()"
+              OnKeyDown="(e) => Header_OnKeyDown(e)" />
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [Parameter]
+    public SListReadDto? SList { get; set; }
+
+    [Parameter]
+    public EventCallback<SListReadDto> OnUpdateCallback { get; set; }
+
+    [Inject]
+    private ISListService? SListService { get; set; }
+
+    private MudTextField<string>? HeaderInput { get; set; }
+
+    private string? SListName { get; set; }
+
+    private async Task Header_OnBlur()
+    {
+        if (SListName == "")
+        {
+            if (SList is not null)
+            {
+                SListName = SList.Name;
+            }
+        }
+        else
+        {
+            await UpdateListName();
+        }
+    }
+
+    private async Task Header_OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            if (HeaderInput is not null)
+            {
+                await HeaderInput.BlurAsync();
+            }
+
+            await Header_OnBlur();
+        }
+    }
+
+    private async Task UpdateListName()
+    {
+        if (SList is not null && SListName != SList.Name)
+        {
+            var slistUpdateDto = new SListUpdateDto() { Name = SListName };
+
+            bool success = false;
+
+            if (SListService is not null)
+            {
+                success = await SListService.UpdateSList(slistUpdateDto, Id);
+            }
+
+            if (success)
+            {
+                SList.Name = SListName;
+                await OnUpdateCallback.InvokeAsync(SList);
+            }
+            else
+            {
+                SListName = SList.Name;
+            }
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (SList is not null)
+        {
+            SListName = SList.Name;
+        }
+    }
+}

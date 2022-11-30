@@ -1,0 +1,60 @@
+﻿@using NotesOnline.Dtos;
+@using NotesOnline.Web.Services.Contracts;
+<MudDialog>
+    <TitleContent>
+        <MudPaper Elevation="0" Class="d-flex justify-center">
+            <MudText Class="mt-2" Typo="Typo.h4" Color="Color.Primary">Select List</MudText>
+        </MudPaper>
+    </TitleContent>
+    <DialogContent>
+        <MudStack>
+            @if (SLists is not null)
+            {
+                if (SLists.Count() == 0)
+                {
+                    <MudText Class="mb-5" Typo="Typo.body1" Style="text-align: center">You have no lists. Press the "Create List" button to create some!</MudText>
+                }
+                else
+                {
+                    <MudList Clickable="true" Class="mb-5">
+                        @foreach (SListReadDto SList in SLists!)
+                        {
+                            <SelectListDialogItem SList="@SList"/>
+                        }
+                    </MudList>
+                }
+            }
+            else
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="text-align: center">Loading lists...</MudText>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter] 
+    private MudDialogInstance? MudDialog { get; set; }
+
+    private IEnumerable<SListReadDto>? SLists { get; set; }
+
+    [Inject]
+    private ISListService? SListService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (SListService is not null)
+        {
+            SLists = await SListService.GetSLists();
+        }
+    }
+
+    private void Cancel_Click()
+    {
+        if (MudDialog is not null)
+        {
+            MudDialog.Close();
+        }
+    }
+}

@@ -1,0 +1,27 @@
+﻿@using NotesOnline.Dtos;
+
+<MudStack Row>
+    <ListHeaderText Id="Id" OnUpdateCallback="(sList) => PassUpdateCallback(sList)" SList="SList" />
+    <ListHeaderOptions Id="Id" />
+</MudStack>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [Parameter]
+    public SListReadDto? SList { get; set; }
+
+    [Parameter]
+    public EventCallback<SListReadDto> OnUpdateCallback { get; set; }
+
+    private void ChangeNameCallBack()
+    {
+        
+    }
+
+    private void PassUpdateCallback(SListReadDto sList)
+    {
+        OnUpdateCallback.InvokeAsync(sList);
+    }
+}
